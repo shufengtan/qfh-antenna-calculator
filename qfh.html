@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Quadrifilar Helicoidal Antenna Calculator</title>
+<script>
+function $(id){
+  return document.getElementById(id).innerHTML;
+}
+function set$(id, text){
+  document.getElementById(id).innerHTML = text;
+}
+
+const Precision = {'mm': 0.1, 'ratio': 0.0001};
+
+function printf(x, unit){
+  let precision = Precision[unit];
+  if (! precision){
+    precision = .001
+  }
+  let inv_prec = parseInt(1/precision);
+  return parseInt(x*inv_prec)/inv_prec;
+}
+
+// Global variables
+var speed_of_light, design_freq_MHz, design_wavelen_mm;
+
+function helix_curve_len(h, d){
+  var b = Math.PI * d / 2;
+  return Math.sqrt(h*h + b*b);
+}
+
+const wavelen_compensation_factors = [
+   1.045, 1.053, 1.060, 1.064, 1.068, 1.070, 1.070, 1.071, 1.071, 1.070, 1.070, 1.070, 1.070, 1.069, 1.069, 1.068, 1.067
+];
+// freq_compensation_factors are not used
+//const freq_compensation_factors = [
+//   1.013, 1.014, 1.015, 1.016, 1.017, 1.018, 1.020, 1.022, 1.025, 1.027, 1.030, 1.033, 1.036, 1.041, 1.044, 1.049, 1.054
+//];
+
+function calc(form){
+  speed_of_light = Number(form.speed_of_light.value);
+  design_freq_MHz = Number(form.design_freq_MHz.value);
+  design_wavelen_mm = speed_of_light / design_freq_MHz / 1000;
+  let H1 = Number($("H1ratio")) * design_wavelen_mm;
+  let D1 = Number($("D1ratio")) * design_wavelen_mm;
+  let helix1 = helix_curve_len(H1, D1);
+  let L1 = helix1 + D1;
+  let H2 = Number($("H2ratio")) * design_wavelen_mm;
+  let D2 = Number($("D2ratio")) * design_wavelen_mm;
+  let helix2 = helix_curve_len(H2, D2);
+  let L2 = helix2 + D2;
+  set$("design_wavelen_mm", printf(design_wavelen_mm, 'mm'));
+  set$("D1_H1", printf(D1/H1, 'ratio'));
+  set$("H1", printf(H1, 'mm'));
+  set$("D1", printf(D1, 'mm'));
+  set$("Helix1", printf(helix1, 'mm'));
+  set$("L1", printf(L1, 'mm'));
+  set$("L1_lambda", printf(L1/design_wavelen_mm, 'ratio'));
+  set$("D2_H2", printf(D2/H2, 'ratio'));
+  set$("H2", printf(H2, 'mm'));
+  set$("D2", printf(D2, 'mm'));
+  set$("Helix2", printf(helix2, 'mm'));
+  set$("L2", printf(L2, 'mm'));
+  set$("L2_lambda", printf(L2/design_wavelen_mm, 'ratio'));
+  set$("L1_L2", printf(L1/L2, 'ratio'));
+
+  JC_calc(document.forms["JC_qfh"]);
+}
+
+function wavelen_cf_for_diameter(diam){
+  if(diam < 0){
+    diam = 0;
+  } else {
+    if (diam > wavelen_compensation_factors.length - 1){
+      diam = wavelen_compensation_factors.length - 1;
+    }
+  }
+  i_diam = parseInt(diam);
+  return (wavelen_compensation_factors[i_diam] + (wavelen_compensation_factors[i_diam + 1] - wavelen_compensation_factors[i_diam])*(diam - i_diam));
+}
+
+function dump_wavelen_comp_table(){
+  var n = 4;
+  var tbl = "<table><tr>";
+  for (let j = 0; j < wavelen_compensation_factors.length/n; j++){
+    tbl += "<td>φ, mm</td><td/>";
+  }
+  tbl += "</tr>";
+  for (let i = 0; i < n; i++){
+    tbl += "<tr>";
+    for (let j = 0; j < wavelen_compensation_factors.length; j += n){
+      if (! wavelen_compensation_factors[i+j]){
+        break;
+      }
+      tbl += '<td align="center" style="text-decoration:underline">' + (i+j) + "</td><td>" + wavelen_compensation_factors[i+j] + "</td>";
+    }
+    tbl += "</tr>";
+  }
+  tbl += "</table>";
+  return tbl;
+}
+
+function JC_breakdown(total_len, idx, bend_corr, W_H_ratio, twists){
+  var total_len_c = total_len + 4*bend_corr;
+  var helix_d = 0.5*total_len_c / (1 + Math.sqrt(1/W_H_ratio/W_H_ratio + twists * twists * Math.PI * Math.PI));
+  var helix_l  = total_len_c / 2 - helix_d;
+  var ant_h = helix_d / W_H_ratio;
+  set$("JC_total_len"   + idx, printf(total_len, 'mm'));
+  set$("JC_total_len_c" + idx, printf(total_len_c, 'mm'));
+  set$("JC_D" +idx, printf(helix_d, 'mm'));
+  set$("JC_helix_" + idx, printf(helix_l, 'mm'));
+  set$("JC_H" + idx, printf(ant_h, 'mm'));
+  return
+}
+
+function JC_calc(form){
+  var twists = Number(form.twists.value);
+  var diam = Number(form.conductor_diameter.value);
+  var brad = Number(form.bend_radius.value);
+  var W_H_ratio = Number(form.W_H_ratio.value);
+  var L_multiplier = Number($("JC_multiplier_L"));
+  var S_multiplier = Number($("JC_multiplier_S"));
+  var diam_cf = wavelen_cf_for_diameter(diam);
+  var c_wavelen = diam_cf * design_wavelen_mm;
+  var bend_corr = 2*brad - Math.PI*brad/2;
+  var total_len1 = L_multiplier * c_wavelen;
+  var total_len2 = S_multiplier * c_wavelen;
+  set$("Wavelen_CF", dump_wavelen_comp_table());
+  set$("JC_diameter_cf", diam_cf);
+  set$("JC_c_wavelen", printf(c_wavelen, 'mm'));
+  set$("JC_bend_correction", printf(bend_corr, 'mm'));
+  JC_breakdown(total_len1, 1, bend_corr, W_H_ratio, twists);
+  JC_breakdown(total_len2, 2, bend_corr, W_H_ratio, twists);
+}
+</script>
+</head>
+
+<body>
+    <h1>Quadrifilar Helicoidal Antenna Calculator</h1>
+    <form name="qfh" action="javascript:void(0);">
+    <label>Design Frequency f = </label><input type="text" name="design_freq_MHz" maxlength="10" size="2" value="137.5"></input> MHz,
+    <label>Speed of light c = </label><input type="text" name="speed_of_light" maxlength="9" size="6" value="299792458"></input> m/s
+  <input type="submit" value="Calculate" onclick="calc(this.form)">
+    </form>
+    <h2>Design wavelength λ = c/f/1000 = <span id="design_wavelen_mm">___</span> mm</h2>
+
+<table width="90%"><tr style="vertical-align:top"><td width="50%">
+    <p><a href="https://www.jcoppens.com/ant/qfh/calc.en.php">QFH calculator</a> on jcoppens.com takes into account bending radii of
+    wires/tubes and is predicated on a fixed width/height ratio for both loops.</p>
+    <p>The basic idea of this QFH design is a compensated wavelength that depends on the diameter of conductor.  The desired lengths of
+    the loops are then calculated by multiplying the compensated wavelength with two multipliers:</p>
+    <math display="block"><msub><mi>μ</mi><mn>1</mn></msub><mo>=</mo> <mn><span id="JC_multiplier_L">1.026</span></mn></math>
+    <math display="block"><msub><mi>μ</mi><mn>2</mn></msub><mo>=</mo> <mn><span id="JC_multiplier_S">0.975</span></mn></math>
+<form name="JC_qfh">
+  <table><tr>
+    <th>Input</th><th/>
+    </tr><tr>
+    <td><label>Number of turns &tau; = </label></td><td><select name="twists"><OPTION value="0.25">0.25<OPTION value="0.5" selected>0.5<OPTION value="0.75">0.75<OPTION value="1.0">1.0</select></td>
+    </tr><tr>
+    <td><label>Conductor diameter φ = </label></td><td><input type="text" name="conductor_diameter" maxlength="3" value="9.5" size="1"></input> mm,
+    <math><msub><mi>f</mi><mi>c</mi></msub></math> = <span id="JC_diameter_cf"> ___ </span></td>
+    </tr><tr>
+    <td><label>Bending radius r = </label></td><td><input type="text" name="bend_radius" maxlength="2" value="19" size="1"></input> mm</td>
+    </tr><tr>
+    <td><label>Width/height ratio ρ = </label></td><td><input type="text" name="W_H_ratio" maxlength="4" value="0.44" size="1"></input></td>
+  </tr></table>
+</form>
+  <table>
+    <tr><th colspan="2">Results</th></tr>
+    <tr><td>Compensated wavelength <math><msub><mi>λ</mi><mi>c</mi></msub> <mo>=</mo> <msub><mi>f</mi><mi>c</mi></msub><mi>λ</mi> <mo>=</mo></math> </td><td><span id="JC_c_wavelen"> ___ </span> mm</td></tr>
+    <tr><td>Bending correction <math><mo>=</mo><mn>2</mn><mi>r</mi><mo>-</mo><mfrac><mi>πr</mi><mn>2</mn></mfrac><mo>=</mo></math> </td><td><span id="JC_bend_correction"> ___ </span> mm</td></tr>
+  </table>
+  <table width="100%">
+    <tr> <th/><th>Larger Loop</th><th>Smaller Loop</th> </tr>
+    <tr>
+      <td>Total length </td>
+      <td><math><msub><mi>μ</mi><mn>1</mn></msub><msub><mi>λ</mi><mi>c</mi></msub><mo>=</mo></math> <span id="JC_total_len1"> ___ </span>mm </td>
+      <td><math><msub><mi>μ</mi><mn>2</mn></msub><msub><mi>λ</mi><mi>c</mi></msub><mo>=</mo></math> <span id="JC_total_len2"> ___ </span>mm </td>
+    </tr>
+    <tr>
+      <td>Compensated total length</td>
+      <td><math><msub><mi>L</mi><mi>c1</mi></msub><mo>=</mo></math><span id="JC_total_len_c1"> ___ </span>mm </td>
+      <td><math><msub><mi>L</mi><mi>c2</mi></msub><mo>=</mo></math><span id="JC_total_len_c2"> ___ </span>mm </td>
+    </tr>
+    <tr>
+      <td>Helix Diameter</td>
+      <td> <math><msub><mi>D</mi><mn>1</mn></msub><mo>=</mo></math><span id="JC_D1"> ___ </span>mm </td>
+      <td> <math><msub><mi>D</mi><mn>2</mn></msub><mo>=</mo></math><span id="JC_D2"> ___ </span>mm </td>
+    </tr>
+    <tr>
+      <td>Helix Curve Length</td>
+      <td> <math><msub><mi>L</mi><mi>helix 1</mi></msub><mo>=</mo></math><span id="JC_helix_1"> ___ </span>mm </td>
+      <td> <math><msub><mi>L</mi><mi>helix 2</mi></msub><mo>=</mo></math><span id="JC_helix_2"> ___ </span>mm </td>
+    </tr>
+    <tr>
+      <td>Antenna Height</td>
+      <td> <math><msub><mi>H</mi><mn>1</mn></msub><mo>=</mo></math><span id="JC_H1"> ___ </span>mm </td>
+      <td> <math><msub><mi>H</mi><mn>2</mn></msub><mo>=</mo></math><span id="JC_H2"> ___ </span>mm </td>
+    </tr>
+  </table>
+  <hr/>
+  Wavelength compensation factor table for <math><msub><mi>f</mi><mi>c</mi></msub></math> lookup: <span id="Wavelen_CF"></span>
+  <hr/>
+    <p>The total length is distributed between a helix curve and a horizontal straight segment of length D:</p>
+    <div align="center"><math><msub><mi>L</mi><mi>c</mi></msub> <mo>=</mo> <msub><mi>L</mi><mi>helix</mi></msub> <mo>+</mo> <mi>D</mi> </math></div>
+    <p>Since we must have <math><mfrac><mi>D</mi><mi>H</mi></mfrac><mo>=</mo><mi>ρ</mi></math>,</p>
+    <math display="block">
+      <msubsup><mi>L</mi><mi>helix</mi><mn>2</mn></msubsup>
+      <mo>=</mo>i
+      <mfrac>
+        <msup><mi>D</mi><mn>2</mn></msup>
+        <msup><mi>ρ</mi><mn>2</mn></msup>
+      </mfrac>
+      <mo>+</mo>
+      <msup>
+        <mrow><mo>(</mo><mi>&tau;</mi><mi>&pi;</mi><mi>D</mi><mo>)</mo></mrow>
+        <mn>2</mn>
+      </msup>
+    </math>
+    <math display="block">
+      <msup>
+        <mrow>
+          <mo>(</mo> <msub><mi>L</mi><mi>c</mi></msub> <mo>-</mo> <mi>D</mi> <mo>)</mo>
+        </mrow>
+        <mn>2</mn>
+      </msup>
+      <mo>=</mo>
+      <mo>(</mo> <mfrac><mn>1</mn><msup><mi>ρ</mi><mn>2</mn></msup></mfrac>
+      <mo>+</mo> <msup> <mrow><mo>(</mo><mi>&tau;</mi><mi>&pi;</mi><mo>)</mo></mrow> <mn>2</mn></msup>
+      <mo>)</mo> <msup><mi>D</mi><mn>2</mn></msup>
+    </math>
+    <math display="block">
+      <mi>D</mi> <mo>=</mo>
+      <mfrac><msub><mi>L</mi><mi>c</mi></msub>
+        <mrow>
+          <mn>1</mn><mo>+</mo>
+          <msqrt>
+            <mrow>
+              <mfrac><mn>1</mn><msup><mi>ρ</mi><mn>2</mn></msup></mfrac>
+              <mo>+</mo>
+              <msup><mi>&tau;</mi><mn>2</mn></msup> <msup><mi>&pi;</mi><mn>2</mn></msup>
+            </mrow>
+          </msqrt>
+        </mrow>
+      </mfrac>
+    </math>
+
+</td><td width="50%">
+    <p>Based on a <a href="https://www.rish.kyoto-u.ac.jp/digitalbeacon/information/Building_QFH_Antenna_Guide.pdf">pdf document</a> on www.rish.kyoto-u.ac.jp.</p>
+    The curve length of a half turn helix with diameter D and height H can be calculated using Pythagorean Theorem:
+    <math display="block">
+      <msubsup><mi>L</mi><mi>helix</mi><mn>2</mn></msubsup> <mo>=</mo> <msup><mi>H</mi><mn>2</mn></msup>
+      <mo>+</mo>
+      <msup>
+        <mrow>
+          <mo>(</mo> <mfrac><mi>&pi;D</mi><mn>2</mn></mfrac> <mo>)</mo>
+        </mrow>
+        <mn>2</mn>
+      </msup>
+    </math>
+    <table width="100%">
+        <tr><th/><th>Big Loop</th><th/> <th>Small Loop</th><th/>
+    </tr><tr>
+        <td>Width/Height Ratio</td>
+        <td><math><msub><mi>D</mi><mn>1</mn></msub><mo>/</mo><msub><mi>H</mi><mn>1</mn></msub></math> </td><td><span id="D1_H1"> ___ </span></td>
+        <td><math><msub><mi>D</mi><mn>2</mn></msub><mo>/</mo><msub><mi>H</mi><mn>2</mn></msub></math> </td><td><span id="D2_H2"> ___ </span></td>
+    </tr><tr>
+        <td>Height</td>
+        <td><math><msub><mi>H</mi><mn>1</mn></msub> <mo>=</mo></math><span id="H1ratio">0.260</span>λ </td><td><span id="H1"> ___ </span> mm</td>
+        <td><math><msub><mi>H</mi><mn>2</mn></msub> <mo>=</mo></math><span id="H2ratio">0.238</span>λ </td><td><span id="H2"> ___ </span> mm</td>
+    </tr><tr>
+        <td>Diameter</td>
+        <td><math><math><msub><mi>D</mi><mn>1</mn></msub> <mo>=</mo></math> <span id="D1ratio">0.173</span>λ </td><td><span id="D1"> ___ </span> mm</td>
+        <td><math><math><msub><mi>D</mi><mn>2</mn></msub> <mo>=</mo></math> <span id="D2ratio">0.156</span>λ </td><td><span id="D2"> ___ </span> mm</td>
+    </tr><tr>
+        <td>Helix Length</td>
+        <td><math><msub><mi>L</mi><mi>helix 1</mi></msub><mo>=</mo></math></td><td><span id="Helix1"> ___ </span> mm</td>
+        <td><math><msub><mi>L</mi><mi>helix 2</mi></msub><mo>=</mo></math></td><td><span id="Helix2"> ___ </span> mm</td>
+    </tr><tr>
+        <td>Helix + Diameter</td>
+        <td><math><msub><mi>L</mi><mn>1</mn></msub><mo>=</mo></math><span id="L1"> ___ </span> mm </td><td> (<span id="L1_lambda"> ___ </span>λ)</td>
+        <td><math><msub><mi>L</mi><mn>2</mn></msub><mo>=</mo></math><span id="L2"> ___ </span> mm </td><td> (<span id="L2_lambda"> ___ </span>λ)</td>
+    </tr>
+    </table>
+    <p><math><msub><mi>L</mi><mn>1</mn></msub><mo>/</mo><msub><mi>L</mi><mn>2</mn></msub> <mo>=</mo> </math><span id="L1_L2"> ___ </span></p>
+</td></tr></table>
+
+</body>
+</html>
