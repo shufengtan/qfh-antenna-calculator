@@ -125,7 +125,6 @@ function JC_calc(form){
   var bend_corr = 2*brad - Math.PI*brad/2;
   var total_len1 = L_multiplier * c_wavelen;
   var total_len2 = S_multiplier * c_wavelen;
-  set$("Wavelen_CF", dump_wavelen_comp_table());
   set$("JC_diameter_cf", diam_cf);
   set$("JC_c_wavelen", printf(c_wavelen, 'mm'));
   set$("JC_bend_correction", printf(bend_corr, 'mm'));
@@ -211,8 +210,8 @@ function JC_calc(form){
   <hr/>
   Wavelength compensation factor table for <math><msub><mi>f</mi><mi>c</mi></msub></math> lookup: <span id="Wavelen_CF"></span>
   <hr/>
-  <p>The total length of either loop is for two (2) helixes, each of which has two (2) bends. So a total of four bending corrections need to be applied
-     to the total length:
+  <p>The total length of either loop is for two (2) helixes, each of which has two (2) bends. So a total of four bending corrections need
+     to be applied to the total length:
      <math display="block">
        <msub><mi>L</mi><mi>c</mi></msub>
        <mo>=</mo>
@@ -228,9 +227,14 @@ function JC_calc(form){
        <mo>)</mo>
      </math>
   </p>
-    <p>The compensated total length is distributed between two helix curves and two horizontal straight segments of length D:</p>
-    <math display="block"><mfrac><msub><mi>L</mi><mi>c</mi></msub><mn>2</mn></mfrac> <mo>=</mo> <msub><mi>L</mi><mi>helix</mi></msub> <mo>+</mo> <mi>D</mi> </math>
-    <p>Since we must have <math><mfrac><mi>D</mi><mi>H</mi></mfrac><mo>=</mo><mi>ρ</mi></math>,</p>
+
+  <p>The compensated total length is distributed between two helix curves and two horizontal straight segments of length D:</p>
+    <math display="block">
+      <msub><mi>L</mi><mi>c</mi></msub> <mo>=</mo>
+      <mn>2</mn><mo>(</mo><msub><mi>L</mi><mi>helix</mi></msub> <mo>+</mo> <mi>D</mi> <mo>)</mo>
+    </math>
+
+  <p>Since we must have <math><mfrac><mi>D</mi><mi>H</mi></mfrac><mo>=</mo><mi>ρ</mi></math>,</p>
     <math display="block">
       <msubsup><mi>L</mi><mi>helix</mi><mn>2</mn></msubsup>
       <mo>=</mo>i
@@ -256,6 +260,8 @@ function JC_calc(form){
       <mo>+</mo> <msup> <mrow><mo>(</mo><mi>&tau;</mi><mi>&pi;</mi><mo>)</mo></mrow> <mn>2</mn></msup>
       <mo>)</mo> <msup><mi>D</mi><mn>2</mn></msup>
     </math>
+
+  <p>Finally,</p>
     <math display="block">
       <mi>D</mi> <mo>=</mo>
       <mfrac><mrow><mn>0.5</mn><msub><mi>L</mi><mi>c</mi></msub></mrow>
@@ -273,7 +279,9 @@ function JC_calc(form){
     </math>
 
 </td><td width="50%" style="padding: 0 15px">
-    <p>Based on a <a href="https://www.rish.kyoto-u.ac.jp/digitalbeacon/information/Building_QFH_Antenna_Guide.pdf">pdf document</a> on www.rish.kyoto-u.ac.jp.</p>
+    <p>Another QFH design can be found in a
+    <a href="https://www.rish.kyoto-u.ac.jp/digitalbeacon/information/Building_QFH_Antenna_Guide.pdf">
+    pdf document</a> on www.rish.kyoto-u.ac.jp.</p>
     The curve length of a half turn helix with diameter D and height H can be calculated using Pythagorean Theorem:
     <math display="block">
       <msubsup><mi>L</mi><mi>helix</mi><mn>2</mn></msubsup> <mo>=</mo> <msup><mi>H</mi><mn>2</mn></msup>
@@ -313,4 +321,7 @@ function JC_calc(form){
 </td></tr></table>
 
 </body>
+<script>
+set$("Wavelen_CF", dump_wavelen_comp_table());
+</script>
 </html>
