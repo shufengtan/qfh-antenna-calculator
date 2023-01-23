@@ -136,15 +136,15 @@ function JC_calc(form){
 </head>
 
 <body>
-    <h1>Quadrifilar Helicoidal Antenna Calculator</h1>
+<h1>Quadrifilar Helicoidal Antenna Calculator</h1>
     <form name="qfh" action="javascript:void(0);">
     <label>Design Frequency f = </label><input type="text" name="design_freq_MHz" maxlength="10" size="2" value="137.5"></input> MHz,
     <label>Speed of light c = </label><input type="text" name="speed_of_light" maxlength="9" size="6" value="299792458"></input> m/s
   <input type="submit" value="Calculate" onclick="calc(this.form)">
     </form>
-    <h2>Design wavelength λ = c/f/1000 = <span id="design_wavelen_mm">___</span> mm</h2>
+  <h2>Design wavelength λ = c/f/1000 = <span id="design_wavelen_mm">___</span> mm</h2>
 
-<table width="90%"><tr style="vertical-align:top"><td width="50%">
+<table width="90%"><tr style="vertical-align:top"><td width="50%" style="padding: 0 15px">
     <p><a href="https://www.jcoppens.com/ant/qfh/calc.en.php">QFH calculator</a> on jcoppens.com takes into account bending radii of
     wires/tubes and is predicated on a fixed width/height ratio for both loops.</p>
     <p>The basic idea of this QFH design is a compensated wavelength that depends on the diameter of conductor.  The desired lengths of
@@ -155,8 +155,14 @@ function JC_calc(form){
   <table><tr>
     <th>Input</th><th/>
     </tr><tr>
-    <td><label>Number of turns &tau; = </label></td><td><select name="twists"><OPTION value="0.25">0.25<OPTION value="0.5" selected>0.5<OPTION value="0.75">0.75<OPTION value="1.0">1.0</select></td>
-    </tr><tr>
+    <td><label>Number of turns &tau; = </label></td><td>
+      <select name="twists">
+        <option value="0.25">0.25</option>
+        <option value="0.5" selected>0.5</option>
+        <option value="0.75">0.75</option>
+        <option value="1.0">1.0</option>
+      </select>
+    </td></tr><tr>
     <td><label>Conductor diameter φ = </label></td><td><input type="text" name="conductor_diameter" maxlength="3" value="9.5" size="1"></input> mm,
     <math><msub><mi>f</mi><mi>c</mi></msub></math> = <span id="JC_diameter_cf"> ___ </span></td>
     </tr><tr>
@@ -167,8 +173,12 @@ function JC_calc(form){
 </form>
   <table>
     <tr><th colspan="2">Results</th></tr>
-    <tr><td>Compensated wavelength <math><msub><mi>λ</mi><mi>c</mi></msub> <mo>=</mo> <msub><mi>f</mi><mi>c</mi></msub><mi>λ</mi> <mo>=</mo></math> </td><td><span id="JC_c_wavelen"> ___ </span> mm</td></tr>
-    <tr><td>Bending correction <math><mo>=</mo><mn>2</mn><mi>r</mi><mo>-</mo><mfrac><mi>πr</mi><mn>2</mn></mfrac><mo>=</mo></math> </td><td><span id="JC_bend_correction"> ___ </span> mm</td></tr>
+    <tr><td>Compensated wavelength <math><msub><mi>λ</mi><mi>c</mi></msub> <mo>=</mo> <msub><mi>f</mi><mi>c</mi></msub><mi>λ</mi> <mo>=</mo></math> </td>
+        <td><span id="JC_c_wavelen"> ___ </span> mm</td>
+    </tr>
+    <tr><td>Bending correction <math><mo>=</mo><mn>2</mn><mi>r</mi><mo>-</mo><mfrac><mi>πr</mi><mn>2</mn></mfrac><mo>=</mo></math> </td>
+        <td><span id="JC_bend_correction"> ___ </span> mm</td>
+    </tr>
   </table>
   <table width="100%">
     <tr> <th/><th>Larger Loop</th><th>Smaller Loop</th> </tr>
@@ -201,8 +211,25 @@ function JC_calc(form){
   <hr/>
   Wavelength compensation factor table for <math><msub><mi>f</mi><mi>c</mi></msub></math> lookup: <span id="Wavelen_CF"></span>
   <hr/>
-    <p>The total length is distributed between a helix curve and a horizontal straight segment of length D:</p>
-    <div align="center"><math><msub><mi>L</mi><mi>c</mi></msub> <mo>=</mo> <msub><mi>L</mi><mi>helix</mi></msub> <mo>+</mo> <mi>D</mi> </math></div>
+  <p>The total length of either loop is for two (2) helixes, each of which has two (2) bends. So a total of four bending corrections need to be applied
+     to the total length:
+     <math display="block">
+       <msub><mi>L</mi><mi>c</mi></msub>
+       <mo>=</mo>
+       <mi>L</mi>
+       <mo>+</mo>
+       <mn>4</mn>
+       <mo>(</mo>
+         <mn>2</mn><mi>r</mi><mo>-</mo>
+         <mfrac>
+           <mrow><mi>&pi;</mi><mi>r</mi></mrow>
+           <mn>2</mn>
+         </mfrac>
+       <mo>)</mo>
+     </math>
+  </p>
+    <p>The compensated total length is distributed between two helix curves and two horizontal straight segments of length D:</p>
+    <math display="block"><mfrac><msub><mi>L</mi><mi>c</mi></msub><mn>2</mn></mfrac> <mo>=</mo> <msub><mi>L</mi><mi>helix</mi></msub> <mo>+</mo> <mi>D</mi> </math>
     <p>Since we must have <math><mfrac><mi>D</mi><mi>H</mi></mfrac><mo>=</mo><mi>ρ</mi></math>,</p>
     <math display="block">
       <msubsup><mi>L</mi><mi>helix</mi><mn>2</mn></msubsup>
@@ -220,7 +247,7 @@ function JC_calc(form){
     <math display="block">
       <msup>
         <mrow>
-          <mo>(</mo> <msub><mi>L</mi><mi>c</mi></msub> <mo>-</mo> <mi>D</mi> <mo>)</mo>
+          <mo>(</mo><mn>0.5</mn><msub><mi>L</mi><mi>c</mi></msub> <mo>-</mo> <mi>D</mi> <mo>)</mo>
         </mrow>
         <mn>2</mn>
       </msup>
@@ -231,7 +258,7 @@ function JC_calc(form){
     </math>
     <math display="block">
       <mi>D</mi> <mo>=</mo>
-      <mfrac><msub><mi>L</mi><mi>c</mi></msub>
+      <mfrac><mrow><mn>0.5</mn><msub><mi>L</mi><mi>c</mi></msub></mrow>
         <mrow>
           <mn>1</mn><mo>+</mo>
           <msqrt>
@@ -245,7 +272,7 @@ function JC_calc(form){
       </mfrac>
     </math>
 
-</td><td width="50%">
+</td><td width="50%" style="padding: 0 15px">
     <p>Based on a <a href="https://www.rish.kyoto-u.ac.jp/digitalbeacon/information/Building_QFH_Antenna_Guide.pdf">pdf document</a> on www.rish.kyoto-u.ac.jp.</p>
     The curve length of a half turn helix with diameter D and height H can be calculated using Pythagorean Theorem:
     <math display="block">
